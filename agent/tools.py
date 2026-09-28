@@ -2,6 +2,7 @@ from pathlib import Path
 import json
 import yaml
 import subprocess
+import hashlib
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -56,6 +57,38 @@ def read_file(path):
 
     return file_path.read_text(encoding="utf-8")
 
+def write_file(path, content):
+    file_path = get_safe_path(path)
+
+    if file_path is None:
+        return "Access denied."
+
+    if file_path.exists() and not file_path.is_file():
+        return f"Not a file: {path}"
+
+    file_path.write_text(content, encoding="utf-8")
+    return f"Successfully wrote to {path}."
+
+def git_diff():
+    try:
+        result = subprocess.run(
+            ["git", "diff"],
+            cwd=PROJECT_ROOT,
+            text=True,
+            capture_output=True
+        )
+
+        if result.returncode != 0:
+            return f"Git diff failed: {result.stderr}"
+
+        if not result.stdout:
+            return "No uncommitted changes."
+
+        return result.stdout
+
+    except Exception as e:
+        return f"Failed to get git diff: {e}"
+
 def list_experiments():
     experiments_path = PROJECT_ROOT / "experiments"
 
@@ -92,7 +125,9 @@ def list_experiments():
             training_config = config.get("training", {})
 
             objective = experiment_config.get("objective")
+            code_changes = experiment_config.get("code_changes")
             model = model_config.get("name")
+            total_params = model_config.get("total_params")
             epochs = training_config.get("epochs")
             batch_size = training_config.get("batch_size")
             learning_rate = training_config.get("learning_rate")
@@ -101,8 +136,14 @@ def list_experiments():
             if objective:
                 summary.append(f"  Objective: {objective}")
 
+            if code_changes:
+                summary.append(f"  Code changes: {code_changes}")
+
             if model:
                 summary.append(f"  Model: {model}")
+
+            if total_params:
+                summary.append(f"  Parameters: {total_params:,}")
 
             if epochs is not None:
                 summary.append(f"  Epochs: {epochs}")
@@ -162,7 +203,7 @@ def get_next_experiment_id():
     next_number = max(experiment_numbers, default=0) + 1
     return f"EXP-{next_number:03d}"
 
-def run_experiment(objective=None, epochs=None, learning_rate=None, batch_size=None, model_name=None):
+def run_experiment(objective=None, code_changes=None, epochs=None, learning_rate=None, batch_size=None, model_name=None):
     experiment_id = get_next_experiment_id()
 
     command = ["bash", "scripts/run_experiment.sh", "configs/baseline.yaml", "--experiment", experiment_id]
@@ -181,13 +222,23 @@ def run_experiment(objective=None, epochs=None, learning_rate=None, batch_size=N
     print(f"\nStarting experiment: {experiment_id}")
 
     try:
-        result = subprocess.run(
-            command,
-            cwd=PROJECT_ROOT,
-            text=True,
-        )
+        result = subprocess.run(command, cwd=PROJECT_ROOT, text=True)
+
         if result.returncode != 0:
             return f"Experiment {experiment_id} failed with exit code {result.returncode}."
+
+        # So the agent knows what change was implemented for each Exp
+        if code_changes is not None:
+            config_path = EXPERIMENTS_DIR / experiment_id / "config.yaml"
+
+            with config_path.open("r", encoding="utf-8") as file:
+                config = yaml.safe_load(file) or {}
+
+            config["experiment"]["code_changes"] = code_changes
+
+            with config_path.open("w", encoding="utf-8") as file:
+                yaml.dump(config, file, sort_keys=False)
+
         return f"Experiment {experiment_id} completed successfully."
 
     except Exception as e:

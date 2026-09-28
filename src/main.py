@@ -233,6 +233,12 @@ def main():
             pretrained=config["model"].get("pretrained", True),
         ).to(device)
 
+        # Model Size Calculation
+        total_params = sum(p.numel() for p in model.parameters())
+        trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        config["model"]["total_params"] = total_params
+        config["model"]["trainable_params"] = trainable_params
+
         criterion = nn.CrossEntropyLoss()
 
         optimizer = create_optimizer(model,config,)

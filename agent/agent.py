@@ -6,7 +6,9 @@ from tools import (
     list_files,
     list_experiments,
     read_file,
-    run_experiment
+    run_experiment,
+    write_file,
+    git_diff,
 )
 
 
@@ -69,6 +71,14 @@ TOOLS = [
                         "The objective or hypothesis being tested."
                     ),
                 },
+                "code_changes": {
+                    "type": "string",
+                    "description": (
+                        "Describe any code changes made for this experiment, including "
+                        "the file changed, what was changed, and why. Use 'None' if "
+                        "the experiment only changes hyperparameters."
+                    ),
+                },
                 "epochs": {
                     "type": "integer",
                     "description": "Number of training epochs.",
@@ -89,6 +99,35 @@ TOOLS = [
             "required": [],
         },
     },
+    {
+        "type": "function",
+        "name": "write_file",
+        "description": "Write content to an accessible file in the AutoML Research Lab repository.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "Path to the file relative to the project root."
+                },
+                "content": {
+                    "type": "string",
+                    "description": "The complete new content to write to the file."
+                }
+            },
+            "required": ["path", "content"],
+        },
+    },
+    {
+        "type": "function",
+        "name": "git_diff",
+        "description": "Show the current uncommitted changes in the repository.",
+        "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+    },
 
     ]
 
@@ -106,11 +145,21 @@ def execute_tool(name, arguments):
     if name == "run_experiment":
         return run_experiment(
             objective=arguments.get("objective"),
+            code_changes=arguments.get("code_changes"),
             epochs=arguments.get("epochs"),
             learning_rate=arguments.get("learning_rate"),
             batch_size=arguments.get("batch_size"),
             model_name=arguments.get("model_name"),
         )
+
+    if name == "write_file":
+        return write_file(
+            arguments["path"],
+            arguments["content"]
+        )
+
+    if name == "git_diff":
+        return git_diff()
 
     print(f"Unknown tool: {name}")
 

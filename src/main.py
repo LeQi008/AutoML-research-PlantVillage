@@ -53,6 +53,7 @@ def parse_args():
     parser.add_argument("--optimizer", type=str, default=None)
     parser.add_argument("--scheduler", type=str, default=None)
     parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--objective", type=str, default=None, help="Objective or hypothesis being tested in this experiment.",)
 
     return parser.parse_args()
 
@@ -136,6 +137,9 @@ def main():
     if args.experiment is not None:
         config["experiment"]["id"] = args.experiment
 
+    if args.objective is not None:
+        config["experiment"]["objective"] = args.objective
+
     if args.epochs is not None:
         config["training"]["epochs"] = args.epochs
 
@@ -150,9 +154,11 @@ def main():
 
     if args.scheduler is not None:
         config["training"]["scheduler"] = args.scheduler
+        
 
     if args.seed is not None:
         config["seed"] = args.seed
+
 
     seed = config["seed"]
     set_seed(seed)
@@ -173,6 +179,8 @@ def main():
 
     print(f"Experiment: {experiment_id}")
     print(f"Model: {model_name}")
+    objective = config["experiment"]["objective"]
+    print(f"Objective: {objective}")
 
     # Transforms
     train_transform, val_transform, test_transform = create_transforms(
@@ -367,6 +375,7 @@ def main():
     # Save complete experiment
     experiment_results = {
         "experiment_id": experiment_id,
+        "objective": objective,
         "model": model_name,
         "seed": seed,
         "num_splits": dataset.n_splits,

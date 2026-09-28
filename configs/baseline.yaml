@@ -1,5 +1,6 @@
 experiment:
   id: EXP-001
+  objective: "Template"
 
 seed: 42
 

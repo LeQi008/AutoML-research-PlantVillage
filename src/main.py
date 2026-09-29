@@ -19,7 +19,7 @@ from torchvision import transforms
 
 from dataset import PlantVillageDataset
 from evaluate import evaluate
-from model import create_model
+from model import count_parameters, create_model
 from train import train_one_epoch
 
 from tqdm import tqdm
@@ -36,10 +36,12 @@ def print_class_counts(name, dataset):
     #     class_name = dataset.dataset.class_names[cls]
     #     print(f"  {class_name}: {count}")
 
+
 def format_elapsed_time(seconds):
     hours = int(seconds // 3600)
     minutes = int((seconds % 3600) // 60)
     return f"{hours}hr {minutes}m"
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="PlantVillage baseline experiment")
@@ -154,11 +156,19 @@ def main():
 
     if args.scheduler is not None:
         config["training"]["scheduler"] = args.scheduler
-        
 
     if args.seed is not None:
         config["seed"] = args.seed
 
+    # Normalize and validate this setting before persisting the effective config.
+    # This prevents a typo or an unsupported value from silently becoming a run
+    # with no scheduler.
+    scheduler_name = str(config["training"].get("scheduler", "none")).strip().lower()
+    if scheduler_name not in {"none", "cosine", "step"}:
+        raise ValueError(
+            f"Unknown scheduler: {scheduler_name!r}; expected none, cosine, or step"
+        )
+    config["training"]["scheduler"] = scheduler_name
 
     seed = config["seed"]
     set_seed(seed)
@@ -177,6 +187,7 @@ def main():
     with open(experiment_dir / "config.yaml", "w") as f:
         yaml.dump(config, f, sort_keys=False)
 
+    print(f"Experiment Dir: {experiment_dir}")
     print(f"Experiment: {experiment_id}")
     print(f"Model: {model_name}")
     objective = config["experiment"]["objective"]
@@ -203,6 +214,7 @@ def main():
     num_workers = config["data"].get("num_workers", 4)
 
     all_split_results = []
+    parameter_counts = None
 
     # 10-fold experiment
     for split_number in range(dataset.n_splits):
@@ -231,11 +243,17 @@ def main():
         model = create_model(
             num_classes=dataset.num_classes,
             pretrained=config["model"].get("pretrained", True),
+            model_name=model_name,
         ).to(device)
 
-        # Model Size Calculation
-        total_params = sum(p.numel() for p in model.parameters())
-        trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        # Count all models through the same helper.  This also guards against
+        # accidentally reporting a different architecture across folds.
+        split_parameter_counts = count_parameters(model)
+        if parameter_counts is None:
+            parameter_counts = split_parameter_counts
+        elif split_parameter_counts != parameter_counts:
+            raise RuntimeError("Model parameter count changed between splits")
+        total_params, trainable_params = parameter_counts
         config["model"]["total_params"] = total_params
         config["model"]["trainable_params"] = trainable_params
 
@@ -271,12 +289,14 @@ def main():
                 class_names=dataset.class_names,
             )
 
+            learning_rate_before_scheduler = optimizer.param_groups[0]["lr"]
             if scheduler is not None:
                 scheduler.step()
 
             epoch_results = {
                 "epoch": epoch,
                 "learning_rate": optimizer.param_groups[0]["lr"],
+                "learning_rate_before_scheduler_step": learning_rate_before_scheduler,
                 "train_loss": train_loss,
                 "train_accuracy": train_accuracy,
                 "val_loss": val_metrics["loss"],
@@ -330,6 +350,7 @@ def main():
 
         split_results = {
             "split": split_number,
+            "scheduler": scheduler_name,
             "best_epoch": best_epoch,
             "best_val_macro_f1": best_val_f1,
             "test_metrics": test_metrics,
@@ -383,6 +404,9 @@ def main():
         "experiment_id": experiment_id,
         "objective": objective,
         "model": model_name,
+        "num_parameters": total_params,
+        "num_trainable_params": trainable_params,
+        "scheduler": scheduler_name,
         "seed": seed,
         "num_splits": dataset.n_splits,
         "experiment_elapsed_seconds": experiment_elapsed,

@@ -2,4 +2,4 @@
 
 CONFIG=${1:-configs/baseline.yaml}
 
-python.exe src/main.py --config "$CONFIG" "${@:2}"
+python.exe src/main.py --config "$CONFIG" --scheduler "cosine" "${@:2}"

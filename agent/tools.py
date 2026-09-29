@@ -203,7 +203,7 @@ def get_next_experiment_id():
     next_number = max(experiment_numbers, default=0) + 1
     return f"EXP-{next_number:03d}"
 
-def run_experiment(objective=None, code_changes=None, epochs=None, learning_rate=None, batch_size=None, model_name=None):
+def run_experiment(objective=None, code_changes=None, epochs=None, learning_rate=None, batch_size=None, model_name=None, scheduler=None):
     experiment_id = get_next_experiment_id()
 
     command = ["bash", "scripts/run_experiment.sh", "configs/baseline.yaml", "--experiment", experiment_id]
@@ -218,6 +218,8 @@ def run_experiment(objective=None, code_changes=None, epochs=None, learning_rate
         command.extend(["--batch-size", str(batch_size)])
     if model_name is not None:
         command.extend(["--model", model_name])
+    if scheduler is not None:
+        command.extend(["--scheduler", scheduler])
 
     print(f"\nStarting experiment: {experiment_id}")
 

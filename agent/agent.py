@@ -92,8 +92,6 @@ def main():
             "content": response,
         })
 
-        print(f"\nResearch Manager: {response}\n")
-
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,11 @@
 from agents.base_agent import BaseAgent
 
+from tool_definitions import (
+    LIST_EXPERIMENTS_TOOL,
+    READ_FILE_TOOL,
+    RUN_EXPERIMENT_TOOL,
+)
+
 
 EXPERIMENTER_INSTRUCTIONS = """
 You are the Experimenter in an AutoML research lab.
@@ -26,80 +32,11 @@ You do NOT:
 - independently choose a new architecture
 """
 
+
 EXPERIMENTER_TOOLS = [
-    {
-        "type": "function",
-        "name": "list_experiments",
-        "description": "List completed AutoML experiments and their summaries.",
-        "parameters": {
-            "type": "object",
-            "properties": {},
-            "required": [],
-        },
-    },
-    {
-        "type": "function",
-        "name": "read_file",
-        "description": "Read an accessible file from the repository.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "path": {
-                    "type": "string",
-                    "description": "Path relative to the project root.",
-                }
-            },
-            "required": ["path"],
-        },
-    },
-    {
-        "type": "function",
-        "name": "run_experiment",
-        "description": (
-            "Run an experiment using the existing pipeline. Leave config and "
-            "experiment_id unset for a new legacy-style experiment. For an "
-            "explicit rerun, provide both values (for example, "
-            "experiments/EXP-005/config.yaml and EXP-005)."
-        ),
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "config": {
-                    "type": "string",
-                    "description": "Config path relative to the project root.",
-                },
-                "experiment_id": {
-                    "type": "string",
-                    "description": "Explicit experiment ID, e.g. EXP-005.",
-                },
-                "objective": {
-                    "type": "string",
-                    "description": "Objective or hypothesis being tested.",
-                },
-                "epochs": {
-                    "type": "integer",
-                    "description": "Number of training epochs.",
-                },
-                "learning_rate": {
-                    "type": "number",
-                    "description": "Learning rate.",
-                },
-                "batch_size": {
-                    "type": "integer",
-                    "description": "Training batch size.",
-                },
-                "model_name": {
-                    "type": "string",
-                    "description": "Model name to use.",
-                },
-                "scheduler": {
-                    "type": "string",
-                    "description": "Learning-rate scheduler: none, cosine, or step.",
-                },
-            },
-            "required": [],
-        },
-    },
+    LIST_EXPERIMENTS_TOOL,
+    READ_FILE_TOOL,
+    RUN_EXPERIMENT_TOOL,
 ]
 
 

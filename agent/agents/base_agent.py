@@ -26,7 +26,7 @@ class BaseAgent:
             ]
 
             if not tool_calls: # if there is no tool call, we're done.
-                print(f"\n{self.name}: {response.output_text}\n")
+                print(f"\n{self.name}: {response.output_text}\n") # Print statement here so all agents have it
                 return response.output_text
 
             for tool_call in tool_calls:

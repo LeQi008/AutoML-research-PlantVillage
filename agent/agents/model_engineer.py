@@ -1,5 +1,11 @@
 from agents.base_agent import BaseAgent
 
+from tool_definitions import (
+    LIST_FILES_TOOL,
+    READ_FILE_TOOL,
+    WRITE_FILE_TOOL,
+)
+
 
 MODEL_ENGINEER_INSTRUCTIONS = """
 You are the Model Engineer in an AutoML research lab.
@@ -17,57 +23,19 @@ You should:
 You may use write_file to modify source files.
 
 You do NOT:
+- remove comments made in source code
+- remove aesthetic new lines in source code
 - decide the overall research direction
 - run experiments
 - choose experiments
 - modify experiment results
 """
 
+
 MODEL_ENGINEER_TOOLS = [
-    {
-        "type": "function",
-        "name": "list_files",
-        "description": "List accessible files in the AutoML Research Lab repository.",
-        "parameters": {
-            "type": "object",
-            "properties": {},
-            "required": [],
-        },
-    },
-    {
-        "type": "function",
-        "name": "read_file",
-        "description": "Read an accessible file from the repository.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "path": {
-                    "type": "string",
-                    "description": "Path relative to the project root.",
-                }
-            },
-            "required": ["path"],
-        },
-    },
-    {
-        "type": "function",
-        "name": "write_file",
-        "description": "Write or replace an accessible file in the repository.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "path": {
-                    "type": "string",
-                    "description": "Path relative to the project root.",
-                },
-                "content": {
-                    "type": "string",
-                    "description": "Complete new file content.",
-                },
-            },
-            "required": ["path", "content"],
-        },
-    },
+    LIST_FILES_TOOL,
+    READ_FILE_TOOL,
+    WRITE_FILE_TOOL,
 ]
 
 

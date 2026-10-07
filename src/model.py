@@ -48,6 +48,20 @@ def create_model(num_classes, pretrained=True, model_name="resnet18_v1"):
         )
         return model
 
+    if model_name == "mobilenet_v3_small_linear":
+        weights = MobileNet_V3_Small_Weights.DEFAULT if pretrained else None
+
+        model = mobilenet_v3_small(weights=weights)
+        # The ablation keeps the pretrained feature extractor and removes the
+        # original two-layer MLP (including its activation and dropout).  Use
+        # the first classifier layer's input width: it is the width emitted by
+        # the feature extractor (576 in the installed torchvision model).
+        model.classifier = nn.Linear(
+            model.classifier[0].in_features,
+            num_classes,
+        )
+        return model
+
     if model_name == "shufflenet_v2_x0_5":
         weights = ShuffleNet_V2_X0_5_Weights.DEFAULT if pretrained else None
 

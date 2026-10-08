@@ -245,4 +245,84 @@ def run_experiment(objective=None, code_changes=None, epochs=None, learning_rate
 
     except Exception as e:
         return f"Failed to start experiment {experiment_id}: {e}"
-    
+
+#==== Literature tools ====
+
+LITERATURE_DIR = PROJECT_ROOT / "literature"
+
+def get_next_literature_id():
+    LITERATURE_DIR.mkdir(parents=True, exist_ok=True)
+
+    literature_numbers = []
+    for path in LITERATURE_DIR.iterdir():
+        if not path.is_dir() and path.stem.startswith("LIT-"):
+            try:
+                literature_numbers.append(int(path.stem.split("-")[1]))
+            except (IndexError, ValueError):
+                continue
+
+    next_number = max(literature_numbers, default=0) + 1
+    return f"LIT-{next_number:03d}"
+
+def save_literature(title, source_url, summary, relevance, authors=None, year=None, venue=None, limitations=None):
+    print(f"[TOOLS] save_literature called")
+    print(f"[TOOLS] LITERATURE_DIR = {LITERATURE_DIR.resolve()}")
+    LITERATURE_DIR.mkdir(parents=True, exist_ok=True)
+    literature_id = get_next_literature_id()
+    record_path = LITERATURE_DIR / f"{literature_id}.md"
+
+    content = f"""# {literature_id}
+
+    ## Citation
+
+    **Title:** {title}
+
+    **Authors:** {authors or "Not available"}
+
+    **Year:** {year or "Not available"}
+
+    **Venue:** {venue or "Not available"}
+
+    **Source:** {source_url}
+
+    ## Summary
+
+    {summary}
+
+    ## Relevance
+
+    {relevance}
+
+    ## Limitations
+
+    {limitations or "Not specified."}
+    """
+
+    record_path.write_text(content, encoding="utf-8")
+    return f"Saved literature record {literature_id} to literature/{literature_id}.md."
+
+def read_literature(literature_id=None, query=None):
+    if not LITERATURE_DIR.exists():
+        return "No literature records found."
+
+    records = sorted(LITERATURE_DIR.glob("LIT-*.md"))
+
+    if literature_id:
+        record_path = LITERATURE_DIR / f"{literature_id}.md"
+        if not record_path.exists():
+            return f"Literature record not found: {literature_id}"
+        return record_path.read_text(encoding="utf-8")
+
+    if query:
+        query_lower = query.lower()
+        records = [
+            path for path in records
+            if query_lower in path.read_text(encoding="utf-8").lower()
+        ]
+
+    if not records:
+        return "No matching literature records found."
+
+    return "\n\n---\n\n".join(
+        path.read_text(encoding="utf-8") for path in records
+    )

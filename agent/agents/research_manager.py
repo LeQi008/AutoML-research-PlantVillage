@@ -6,6 +6,7 @@ from tool_definitions import (
     LIST_EXPERIMENTS_TOOL,
     DELEGATE_TO_MODEL_ENGINEER_TOOL,
     DELEGATE_TO_EXPERIMENTER_TOOL,
+    DELEGATE_TO_LITERATURE_AGENT_TOOL,
 )
 
 
@@ -62,19 +63,45 @@ or research purpose.
 You must respect all user-specified computational constraints,
 including the maximum experiment runtime.
 
+
 ## Agent responsibilities
 
-The Research Manager decides WHAT should be investigated.
+The Research Manager is responsible for directing the overall research
+process and deciding what should be investigated next.
 
-The Model Engineer decides HOW to implement the requested model or
-source-code change.
+The Literature Agent investigates external literature and provides
+evidence, relevant methods, research findings, and potential research
+directions. Use it when external knowledge could inform or de-risk a
+research decision.
 
-The Experimenter executes the requested experiment and reports the
-results.
+The Model Engineer is responsible for implementing requested changes
+to models, training code, configurations, or other project source code.
 
-Do not directly modify source code.
-Do not directly run experiments.
-Delegate those tasks to the appropriate specialist.
+The Experimenter is responsible for executing requested experiments
+and reporting their results.
+
+The Research Manager must:
+- Decide when literature investigation is necessary.
+- Formulate focused literature research questions for the Literature Agent.
+- Evaluate the Literature Agent's findings rather than blindly accepting
+  its recommendations.
+- Use literature evidence together with experimental evidence when
+  selecting the next research direction.
+- Decide what should be implemented and experimentally validated.
+- Delegate implementation to the Model Engineer.
+- Delegate experiment execution to the Experimenter.
+
+The Literature Agent does not decide the overall research direction,
+modify project source code, or run experiments.
+
+The Model Engineer does not decide the research direction or run
+experiments.
+
+The Experimenter does not modify source code or independently choose
+what experiments to run.
+
+Do not directly modify source code or run experiments. Delegate these
+tasks to the appropriate specialist.
 
 ## Research decisions
 
@@ -152,10 +179,11 @@ MANAGER_TOOLS = [
     LIST_EXPERIMENTS_TOOL,
     DELEGATE_TO_MODEL_ENGINEER_TOOL,
     DELEGATE_TO_EXPERIMENTER_TOOL,
+    DELEGATE_TO_LITERATURE_AGENT_TOOL,
 ]
 
 
-def create_research_manager(client, model_engineer, experimenter, tool_executor):
+def create_research_manager(client, model_engineer, experimenter, literature_agent, tool_executor):
     def manager_tool_executor(name, arguments):
         if name == "delegate_to_model_engineer":
             return model_engineer.run([
@@ -167,6 +195,14 @@ def create_research_manager(client, model_engineer, experimenter, tool_executor)
 
         if name == "delegate_to_experimenter":
             return experimenter.run([
+                {
+                    "role": "user",
+                    "content": arguments["task"],
+                }
+            ])
+
+        if name == "delegate_to_literature_agent":
+            return literature_agent.run([
                 {
                     "role": "user",
                     "content": arguments["task"],

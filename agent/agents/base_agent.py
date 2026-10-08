@@ -20,6 +20,11 @@ class BaseAgent:
 
             conversation.extend(response.output)
 
+            for item in response.output:
+                if item.type == "web_search_call":
+                    print(f"\n[{self.name}] Web search executed")
+                    print(f"Search details: {item}")
+
             tool_calls = [
                 item for item in response.output
                 if item.type == "function_call"

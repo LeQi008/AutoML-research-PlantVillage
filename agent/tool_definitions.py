@@ -136,3 +136,93 @@ DELEGATE_TO_EXPERIMENTER_TOOL = {
         "required": ["task"],
     },
 }
+
+DELEGATE_TO_LITERATURE_AGENT_TOOL = {
+    "type": "function",
+    "name": "delegate_to_literature_agent",
+    "description": "Delegate a literature research task to the Literature Agent. The Literature Agent can search the web and save relevant literature findings.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "task": {
+                "type": "string",
+                "description": "Detailed literature research question or task.",
+            }
+        },
+        "required": ["task"],
+    },
+}
+
+#==== Literature tools ====
+
+WEB_SEARCH_TOOL = {
+    "type": "web_search",
+}
+
+SAVE_LITERATURE_TOOL = {
+    "type": "function",
+    "name": "save_literature",
+    "description": (
+        "Save a verified literature finding as a persistent literature record. "
+        "The system automatically generates a unique literature ID. Do not "
+        "specify or reuse literature IDs."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "title": {
+                "type": "string",
+                "description": "Title of the paper, article, or source.",
+            },
+            "authors": {
+                "type": "string",
+                "description": "Authors or organization responsible for the source.",
+            },
+            "year": {
+                "type": "string",
+                "description": "Publication year or date if available.",
+            },
+            "venue": {
+                "type": "string",
+                "description": "Journal, conference, repository, or website.",
+            },
+            "source_url": {
+                "type": "string",
+                "description": "URL of the source.",
+            },
+            "summary": {
+                "type": "string",
+                "description": "Concise summary of the relevant method and findings.",
+            },
+            "relevance": {
+                "type": "string",
+                "description": "Why this source is relevant to the current research.",
+            },
+            "limitations": {
+                "type": "string",
+                "description": "Important limitations, caveats, or transferability concerns.",
+            },
+        },
+        "required": ["title", "source_url", "summary", "relevance"],
+    },
+}
+
+READ_LITERATURE_TOOL = {
+    "type": "function",
+    "name": "read_literature",
+    "description": "Retrieve previously saved literature records from persistent literature memory.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "literature_id": {
+                "type": "string",
+                "description": "Specific literature ID such as LIT-001.",
+            },
+            "query": {
+                "type": "string",
+                "description": "Keyword or phrase to search across saved literature records.",
+            },
+        },
+        "required": [],
+    },
+}

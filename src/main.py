@@ -223,6 +223,7 @@ def main():
             total_params, trainable_params = parameter_counts
             config["model"]["total_params"] = total_params
             config["model"]["trainable_params"] = trainable_params
+            print(f"Exact parameters: total={total_params:,}, trainable={trainable_params:,}")
             # Persist the effective config only after the instantiated model has
             # supplied the architecture-dependent parameter counts.
             with open(experiment_dir / "config.yaml", "w") as f:
